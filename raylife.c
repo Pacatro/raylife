@@ -4,20 +4,54 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define SCREEN_HEIGHT 900
 #define SCREEN_WIDTH 1000
 #define INITIAL_CAMERA_ZOOM 1.0f
 #define ZOOM_SCALE 0.25f
-#define GRID_SIZE 100
 #define GRID_SPACING 50
-#define TOTAL_CELLS 10
+#define GRID_ROWS 50
+#define GRID_COLS 50
+
+// TODO: FIX GENERATIONS
 
 typedef struct {
     int isAlive;
     Vector2 pos;
     Vector2 size;
+    int aliveNeighbors;
 } Cell;
+
+Cell grid[GRID_ROWS][GRID_COLS];
+int aliveCells = 0;
+
+void initGrid() {
+    for (int i = 0; i < GRID_ROWS; i++) {
+        for (int j = 0; j < GRID_COLS; j++) {
+            grid[i][j].isAlive = 0;
+            grid[i][j].pos.x = j * GRID_SPACING;
+            grid[i][j].pos.y = i * GRID_SPACING;
+            grid[i][j].size.x = GRID_SPACING;
+            grid[i][j].size.y = GRID_SPACING;
+            grid[i][j].aliveNeighbors = 0;
+        }
+    }
+}
+
+void drawGrid() {
+    for (int i = 0; i <= GRID_ROWS; i++) {
+        Vector2 start = {0, i * GRID_SPACING};
+        Vector2 end = {GRID_COLS * GRID_SPACING, i * GRID_SPACING};
+        DrawLineV(start, end, GRAY);
+    }
+
+    for (int j = 0; j <= GRID_COLS; j++) {
+        Vector2 start = {j * GRID_SPACING, 0};
+        Vector2 end = {j * GRID_SPACING, GRID_ROWS * GRID_SPACING};
+        DrawLineV(start, end, GRAY);
+    }
+}
 
 Cell *createCell(int x, int y, int height, int width) {
     Cell *cell = malloc(sizeof(Cell));
@@ -26,54 +60,73 @@ Cell *createCell(int x, int y, int height, int width) {
     cell->pos.y = y;
     cell->size.x = width;
     cell->size.y = height;
+    cell->aliveNeighbors = 0;
     return cell;
 }
 
-void storeCell(Cell ***cells, int *cellCount, Vector2 pos, int width, int height) {
-    // Create a new cell
-    Cell *newCell = createCell(pos.x, pos.y, height, width);
+int countAliveNeighbors(int x, int y) {
+    int count = 0;
 
-    // Reallocate memory if needed
-    (*cells) = realloc(*cells, sizeof(Cell*) * (*cellCount + 1));
-    
-    // Add the new cell to the array
-    (*cells)[*cellCount] = newCell;
-    (*cellCount)++;
+    // This is going to check the 8 surrounding cells
+    // If any of them are alive, then the cell is alive
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+
+            // Calculate the neighbor's coordinates
+            int nx = x + dx;
+            int ny = y + dy;
+
+            if (nx >= 0 && nx < GRID_COLS && ny >= 0 && ny < GRID_ROWS) {
+                if (grid[ny][nx].isAlive) {
+                    count++;
+                }
+            }
+        }   
+    }
+
+    return count;
 }
 
-void deleteCell(Cell ***cells, int *cellCount, Vector2 *pos) {
-    if (*cellCount == 0 || !cells || !(*cells)) return;
+void toggleCells(int x, int y) {
+    if (x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS) {
+        grid[y][x].isAlive = !grid[y][x].isAlive;
+        aliveCells = aliveCells + (grid[y][x].isAlive ? 1 : -1);
+    }
+}
 
-    for (int i = 0; i < *cellCount; i++) {
-        if ((*cells)[i]->pos.x == pos->x && (*cells)[i]->pos.y == pos->y) {
-            free((*cells)[i]);
+void updateGrid() {
+    Cell nextGrid[GRID_ROWS][GRID_COLS];
+    memcpy(nextGrid, grid, sizeof(nextGrid));
+
+    for (int i = 0; i < GRID_ROWS; i++) {
+        for (int j = 0; j < GRID_COLS; j++) {
+            int aliveNeighbors = countAliveNeighbors(i, j);
             
-            for (int j = i; j < *cellCount - 1; j++)
-                (*cells)[j] = (*cells)[j + 1];
-
-            *cells = realloc(*cells, sizeof(Cell*) * (*cellCount - 1));
-            *cellCount--;
-            return;
+            // Game of life rules
+            if (grid[i][j].isAlive) {
+                if (aliveNeighbors < 2 || aliveNeighbors > 3) {
+                    nextGrid[i][j].isAlive = 0;
+                    aliveCells--;
+                }
+            } else {
+                if (aliveNeighbors == 3) {
+                    nextGrid[i][j].isAlive = 1;
+                    aliveCells++;
+                }
+            }
         }
     }
+
+    memcpy(grid, nextGrid, sizeof(grid));
 }
 
-void freeCells(Cell **cells, int *cellCount) {
-    if (*cellCount == 0 || !cells) return;
-
-    for (int i = 0; i < *cellCount; i++) {
-        free(cells[i]);
-        *cellCount--;
-    }
-
-    free(cells);
-}
-
-void drawCells(Cell **cells, int *cellCount) {
-    if (!cells || *cellCount == 0) return;
-    for (int i = 0; i < *cellCount; i++) {
-        if (cells[i]->isAlive)
-            DrawRectangleV(cells[i]->pos, cells[i]->size, WHITE);
+void drawCells() {
+    for(int i = 0; i < GRID_ROWS; i++) {
+        for(int j = 0; j < GRID_COLS; j++) {
+            if (grid[i][j].isAlive)
+                DrawRectangleV(grid[i][j].pos, grid[i][j].size, WHITE);
+        }
     }
 }
 
@@ -103,12 +156,13 @@ int main(void) {
 
     int playMode = 0;
 
-    Cell **cells = malloc(sizeof(Cell*) * TOTAL_CELLS);
-    int cellCount = 0;
+    initGrid();
+    printf("Alive cells: %d\n", aliveCells);
 
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
+        if (aliveCells == 0) playMode = 0;
         if (IsKeyPressed(KEY_SPACE)) playMode = !playMode;
 
         if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))  {
@@ -116,9 +170,10 @@ int main(void) {
         }
 
         float wheel = GetMouseWheelMove();
-        if (wheel)
+        if (wheel){
             setCamera(&camera);
             zoomIncrement(&camera, &wheel);
+        }
 
         BeginDrawing();
             ClearBackground(BLACK);
@@ -127,38 +182,26 @@ int main(void) {
             DrawText(text, 10, 10, 20, WHITE);
  
             BeginMode2D(camera);
-                rlPushMatrix();
-                    rlTranslatef(0, 25*50, 0);
-                    rlRotatef(90, 1, 0, 0);
-                    DrawGrid(GRID_SIZE, GRID_SPACING);
-                rlPopMatrix();
-
+                drawGrid();
                 // Draw cells
-                drawCells(cells, &cellCount);
+                drawCells();
 
+                // Draw mode actions
                 if (!playMode && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                     Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
-                    int alignedX = ((int)mousePos.x / GRID_SPACING) * GRID_SPACING;
-                    int alignedY = ((int)mousePos.y / GRID_SPACING) * GRID_SPACING;
-                    Vector2 pos = { alignedX, alignedY };
-                    // Add a new cell when clicking
-                    storeCell(&cells, &cellCount, pos, GRID_SIZE / 2, GRID_SIZE / 2);
+                    int gridX = (int)(mousePos.x / GRID_SPACING);
+                    int gridY = (int)(mousePos.y / GRID_SPACING);
+                    toggleCells(gridX, gridY);
                 }
 
-                if (!playMode && IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) {
-                    Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
-                    int alignedX = ((int)mousePos.x / GRID_SPACING) * GRID_SPACING;
-                    int alignedY = ((int)mousePos.y / GRID_SPACING) * GRID_SPACING;
-                    Vector2 pos = { alignedX, alignedY };
-                    // Delete a cell when clicking
-                    deleteCell(&cells, &cellCount, &pos);
+                if (playMode && aliveCells > 0) {
+                    updateGrid();
                 }
 
             EndMode2D();
         EndDrawing();
     }
 
-    freeCells(cells, &cellCount);
     CloseWindow();
 
     return 0;
