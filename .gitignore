@@ -1,2 +1,8 @@
-/build
+# VsCode files
 /.vscode
+
+# Build files
+/build
+*.o
+*.out
+raylife

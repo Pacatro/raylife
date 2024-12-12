@@ -20,27 +20,19 @@ You must have [raylib](https://www.raylib.com/) installed.
 
     ```bash
     git clone https://github.com/Pacatro/raylife.git
-    cd raylife
+    cd raylife/src
     ```
 
-2. Create a build directory
+2. Run `make`
 
     ```bash
-    mkdir build
-    cd build
-    ```
-
-3. Run `cmake ..` and `make`
-
-    ```bash
-    cmake ..
     make
     ```
 
-4. Run `./raylife`
+3. Run `./raylife`
 
     ```bash
-    ./raylife <generations> # default: 1000
+    ./raylife <generations> # default: 500  
     ```
 
 ## 🎥 Example
