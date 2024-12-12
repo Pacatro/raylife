@@ -4,7 +4,7 @@ A simple implementation of the [Conway's Game of Life](https://en.wikipedia.org/
 
 ## 🎮 Controls
 
-- Wheel: zoom in/out
+- Mouse wheel: zoom in/out
 - Space: toggle play/draw mode
 - Left mouse button: toggle cell
 - Right mouse button: move camera
