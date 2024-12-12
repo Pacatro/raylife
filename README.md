@@ -4,26 +4,50 @@ A simple implementation of the [Conway's Game of Life](https://en.wikipedia.org/
 
 ## 🎮 Controls
 
-- Mouse wheel: zoom in/out
-- Space: toggle play/draw mode
-- Left mouse button: toggle cell
-- Right mouse button: move camera
-- Up: Increase generation interval
-- Down: Decrease generation interval
-- R: reset all
+- **Mouse wheel**: zoom in/out
+- **Space Key**: toggle play/draw mode
+- **Left mouse button**: toggle cell
+- **Right mouse button**: move camera
+- **Up Arrow**: Increase generation interval
+- **Down Arrow**: Decrease generation interval
+- **R Key**: reset all
 
-## 🖥️ Setup
+## 🖥️ Build
 
 You must have [raylib](https://www.raylib.com/) installed.
 
-```bash
-git clone https://github.com/Pacatro/raylife.git
-cd raylife
-mkdir build
-cd build
-cmake ..
-make && ./raylife
-```
+1. Clone the repository
+
+    ```bash
+    git clone https://github.com/Pacatro/raylife.git
+    cd raylife
+    ```
+
+2. Create a build directory
+
+    ```bash
+    mkdir build
+    cd build
+    ```
+
+3. Run `cmake ..` and `make`
+
+    ```bash
+    cmake ..
+    make
+    ```
+
+4. Run `./raylife`
+
+    ```bash
+    ./raylife
+    ```
+
+## 🎥 Example
+
+Here’s a preview of the game:
+
+![RayLife GIF](gif_raylife.gif)
 
 ## 🔑 License
 

@@ -110,7 +110,7 @@ void updateGrid() {
 void drawCells() {
     for(int i = 0; i < GRID_ROWS; i++) {
         for(int j = 0; j < GRID_COLS; j++) {
-            if (grid[i][j].isAlive){
+            if (grid[i][j].isAlive) {
                 DrawRectangleV(grid[i][j].pos, grid[i][j].size, WHITE);
                 DrawRectangleLinesEx(
                     (Rectangle) {
