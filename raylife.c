@@ -17,8 +17,6 @@
 #define GENERATION_INTERVAL 0.5f
 #define MAX_GENERATIONS 100
 
-// TODO: ADD COMAND LINE ARGUMENTS (max generations, etc)
-
 typedef struct {
     int isAlive;
     Vector2 pos;
