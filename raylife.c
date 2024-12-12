@@ -14,8 +14,8 @@
 #define GRID_SPACING 50
 #define GRID_ROWS 100
 #define GRID_COLS 100
-#define GENERATION_INTERVAL 0.5f
-#define MAX_GENERATIONS 100
+#define GENERATION_INTERVAL 0.20f
+#define MAX_GENERATIONS 1000
 
 typedef struct {
     int isAlive;
