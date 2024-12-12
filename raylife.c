@@ -139,24 +139,6 @@ void nextGeneration(double *lastGenerationTime, int *maxGenerations, float *gene
     }
 }
 
-void moveCamera(Camera2D *camera) {
-    Vector2 delta = GetMouseDelta();
-    delta = Vector2Scale(delta, -INITIAL_CAMERA_ZOOM / camera->zoom);
-    camera->target = Vector2Add(camera->target, delta);
-}
-
-void setCamera(Camera2D *camera) {
-    Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), *camera);
-    camera->offset = GetMousePosition();
-    camera->target = mousePos;
-}
-
-void zoomIncrement(Camera2D *camera, float *wheel) {
-    float scaleFactor = INITIAL_CAMERA_ZOOM + (ZOOM_SCALE * fabsf(*wheel));
-    if (*wheel < 0) scaleFactor = INITIAL_CAMERA_ZOOM / scaleFactor;
-    camera->zoom = Clamp(camera->zoom*scaleFactor, 0.125f, 64.0f);
-}
-
 int main(int argc, char **argv) {
     int maxGenerations = argv[1] ? atoi(argv[1]) : MAX_GENERATIONS;
     
@@ -190,13 +172,21 @@ int main(int argc, char **argv) {
         if (IsKeyPressed(KEY_SPACE) && aliveCells > 0 && generation < maxGenerations) playMode = !playMode;
         
         // Move camera with right mouse button
-        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) moveCamera(&camera);
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+            Vector2 delta = GetMouseDelta();
+            delta = Vector2Scale(delta, -INITIAL_CAMERA_ZOOM / camera.zoom);
+            camera.target = Vector2Add(camera.target, delta);
+        }
 
         // Zoom in/out with mouse wheel
         float wheel = GetMouseWheelMove();
         if (wheel) {
-            setCamera(&camera);
-            zoomIncrement(&camera, &wheel);
+            Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
+            camera.offset = GetMousePosition();
+            camera.target = mousePos;
+            float scaleFactor = INITIAL_CAMERA_ZOOM + (ZOOM_SCALE * fabsf(wheel));
+            if (wheel < 0) scaleFactor = INITIAL_CAMERA_ZOOM / scaleFactor;
+            camera.zoom = Clamp(camera.zoom * scaleFactor, 0.125f, 64.0f);
         }
 
         // Reset all with R key
