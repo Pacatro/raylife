@@ -26,6 +26,8 @@ typedef struct {
 Cell grid[GRID_ROWS][GRID_COLS];
 int aliveCells = 0;
 int generation = 0;
+int playMode = 0;
+
 
 void initGrid() {
     for (int i = 0; i < GRID_ROWS; i++) {
@@ -127,6 +129,16 @@ void drawCells() {
     }
 }
 
+void nextGeneration(double *lastGenerationTime, int *maxGenerations, float *generation_interval) {
+    double time = GetTime();
+
+    if (time - *lastGenerationTime >= *generation_interval) {
+        updateGrid();
+        generation++;
+        *lastGenerationTime = time;
+    }
+}
+
 void moveCamera(Camera2D *camera) {
     Vector2 delta = GetMouseDelta();
     delta = Vector2Scale(delta, -INITIAL_CAMERA_ZOOM / camera->zoom);
@@ -145,7 +157,11 @@ void zoomIncrement(Camera2D *camera, float *wheel) {
     camera->zoom = Clamp(camera->zoom*scaleFactor, 0.125f, 64.0f);
 }
 
-int main(void) {
+int main(int argc, char **argv) {
+    int maxGenerations = argv[1] ? atoi(argv[1]) : MAX_GENERATIONS;
+    
+    if (maxGenerations < 1) maxGenerations = MAX_GENERATIONS;
+
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "RayLife");
 
     Camera2D camera = { 0 };
@@ -160,7 +176,6 @@ int main(void) {
     camera.target.x = gridCenterX;
     camera.target.y = gridCenterY;
 
-    int playMode = 0;
     double lastGenerationTime = 0.0;
     float generation_interval = INIT_INTERVAL;
 
@@ -170,71 +185,72 @@ int main(void) {
 
     while (!WindowShouldClose()) {
         if (aliveCells == 0) playMode = 0;
-        if (IsKeyPressed(KEY_SPACE) && aliveCells > 0) playMode = !playMode;
+        
+        // Toggle play/draw mode with space key
+        if (IsKeyPressed(KEY_SPACE) && aliveCells > 0 && generation < maxGenerations) playMode = !playMode;
+        
+        // Move camera with right mouse button
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) moveCamera(&camera);
 
-        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))  {
-            moveCamera(&camera);
-        }
-
+        // Zoom in/out with mouse wheel
         float wheel = GetMouseWheelMove();
-        if (wheel){
+        if (wheel) {
             setCamera(&camera);
             zoomIncrement(&camera, &wheel);
         }
 
+        // Reset all with R key
+        if (IsKeyPressed(KEY_R)) {
+            playMode = 0;
+            generation = 0;
+            aliveCells = 0;
+            generation_interval = INIT_INTERVAL;
+            initGrid();
+        }
+
+        // Increase generation interval with UP arrow
+        if (IsKeyPressed(KEY_UP)) {
+            generation_interval += 0.1f;
+            if (generation_interval > maxGenerations) generation_interval = maxGenerations;
+        }
+
+        // Decrease generation interval with DOWN arrow
+        if (IsKeyPressed(KEY_DOWN)) {
+            generation_interval -= 0.1f;
+            if (generation_interval < 0.0) generation_interval = 0.0;
+        }
+
+        // Draw mode actions with left mouse button
+        if (!playMode && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
+            int gridX = (int)(mousePos.x / GRID_SPACING);
+            int gridY = (int)(mousePos.y / GRID_SPACING);
+            toggleCells(gridX, gridY);
+        }
+
+        if (!playMode && IsKeyPressed(KEY_SPACE)) {
+            nextGeneration(&lastGenerationTime, &maxGenerations, &generation_interval);
+        }
+
+        // Start generations with space key
+        if (playMode && aliveCells > 0) {
+            nextGeneration(&lastGenerationTime, &maxGenerations, &generation_interval);
+            if (generation >= maxGenerations) 
+                playMode = 0;
+        }
+
         BeginDrawing();
             ClearBackground(BLACK);
+
             DrawRectangle(5, 5, 300, 110, Fade(RAYWHITE, 0.8f));
             DrawText(playMode ? "Play mode" : "Draw mode", 10, 10, 20, BLACK);
-            DrawText(TextFormat("Generation: %d (Max: %d)", generation, MAX_GENERATIONS), 10, 35, 20, BLACK);
+            DrawText(TextFormat("Generation: %d (Max: %d)", generation, maxGenerations), 10, 35, 20, BLACK);
             DrawText(TextFormat("Cells: %d", aliveCells), 10, 60, 20, BLACK);
             DrawText(TextFormat("Generation interval: %.1fs", generation_interval), 10, 85, 20, BLACK);
  
             BeginMode2D(camera);
                 drawGrid();
                 drawCells();
-
-                // Reset all with R
-                if (IsKeyPressed(KEY_R)) {
-                    playMode = 0;
-                    generation = 0;
-                    aliveCells = 0;
-                    generation_interval = INIT_INTERVAL;
-                    initGrid();
-                }
-
-                if (IsKeyPressed(KEY_UP)) {
-                    generation_interval += 0.1f;
-                    if (generation_interval > MAX_GENERATIONS) generation_interval = MAX_GENERATIONS;
-                }
-
-                if (IsKeyPressed(KEY_DOWN)) {
-                    generation_interval -= 0.1f;
-                    if (generation_interval < 0.0) generation_interval = 0.0;
-                }
-
-                // Draw mode actions with left mouse button
-                if (!playMode && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
-                    int gridX = (int)(mousePos.x / GRID_SPACING);
-                    int gridY = (int)(mousePos.y / GRID_SPACING);
-                    toggleCells(gridX, gridY);
-                }
-
-                // Update grid with space
-                if (playMode && aliveCells > 0) {
-                    double time = GetTime();
-
-                    if (time - lastGenerationTime >= generation_interval) {
-                        updateGrid();
-                        generation++;
-                        lastGenerationTime = time;
-
-                        if (generation >= MAX_GENERATIONS) 
-                            playMode = 0;
-                    }
-                }
-
             EndMode2D();
         EndDrawing();
     }

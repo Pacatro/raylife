@@ -5,7 +5,7 @@ A simple implementation of the [Conway's Game of Life](https://en.wikipedia.org/
 ## 🎮 Controls
 
 - **Mouse wheel**: zoom in/out
-- **Space Key**: toggle play/draw mode
+- **Space Key**: tToggle between play and draw modes. (If the number of generations exceeds the maximum, step to the next generation.)
 - **Left mouse button**: toggle cell
 - **Right mouse button**: move camera
 - **Up Arrow**: Increase generation interval
@@ -40,7 +40,7 @@ You must have [raylib](https://www.raylib.com/) installed.
 4. Run `./raylife`
 
     ```bash
-    ./raylife
+    ./raylife <generations> # default: 1000
     ```
 
 ## 🎥 Example
