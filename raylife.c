@@ -14,7 +14,7 @@
 #define GRID_SPACING 50
 #define GRID_ROWS 100
 #define GRID_COLS 100
-#define GENERATION_INTERVAL 0.20f
+#define INIT_INTERVAL 0.2f
 #define MAX_GENERATIONS 1000
 
 typedef struct {
@@ -110,8 +110,19 @@ void updateGrid() {
 void drawCells() {
     for(int i = 0; i < GRID_ROWS; i++) {
         for(int j = 0; j < GRID_COLS; j++) {
-            if (grid[i][j].isAlive)
+            if (grid[i][j].isAlive){
                 DrawRectangleV(grid[i][j].pos, grid[i][j].size, WHITE);
+                DrawRectangleLinesEx(
+                    (Rectangle) {
+                        grid[i][j].pos.x,
+                        grid[i][j].pos.y,
+                        grid[i][j].size.x,
+                        grid[i][j].size.y
+                    },
+                    1,
+                    BLACK
+                );
+            }
         }
     }
 }
@@ -151,6 +162,7 @@ int main(void) {
 
     int playMode = 0;
     double lastGenerationTime = 0.0;
+    float generation_interval = INIT_INTERVAL;
 
     initGrid();
 
@@ -158,7 +170,7 @@ int main(void) {
 
     while (!WindowShouldClose()) {
         if (aliveCells == 0) playMode = 0;
-        if (IsKeyPressed(KEY_SPACE)) playMode = !playMode;
+        if (IsKeyPressed(KEY_SPACE) && aliveCells > 0) playMode = !playMode;
 
         if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))  {
             moveCamera(&camera);
@@ -172,12 +184,11 @@ int main(void) {
 
         BeginDrawing();
             ClearBackground(BLACK);
-            DrawRectangle(5, 5, 200, 85, RAYWHITE); // Rectángulo semi-transparente
-            const char *text = playMode ? "Play mode" : "Draw mode";
-            DrawText(text, 10, 10, 20, BLACK);
-            DrawText(TextFormat("Generation: %d", generation), 10, 35, 20, BLACK);
+            DrawRectangle(5, 5, 300, 110, Fade(RAYWHITE, 0.8f));
+            DrawText(playMode ? "Play mode" : "Draw mode", 10, 10, 20, BLACK);
+            DrawText(TextFormat("Generation: %d (Max: %d)", generation, MAX_GENERATIONS), 10, 35, 20, BLACK);
             DrawText(TextFormat("Cells: %d", aliveCells), 10, 60, 20, BLACK);
- 
+            DrawText(TextFormat("Generation interval: %.1fs", generation_interval), 10, 85, 20, BLACK);
  
             BeginMode2D(camera);
                 drawGrid();
@@ -188,7 +199,18 @@ int main(void) {
                     playMode = 0;
                     generation = 0;
                     aliveCells = 0;
+                    generation_interval = INIT_INTERVAL;
                     initGrid();
+                }
+
+                if (IsKeyPressed(KEY_UP)) {
+                    generation_interval += 0.1f;
+                    if (generation_interval > MAX_GENERATIONS) generation_interval = MAX_GENERATIONS;
+                }
+
+                if (IsKeyPressed(KEY_DOWN)) {
+                    generation_interval -= 0.1f;
+                    if (generation_interval < 0.0) generation_interval = 0.0;
                 }
 
                 // Draw mode actions with left mouse button
@@ -203,7 +225,7 @@ int main(void) {
                 if (playMode && aliveCells > 0) {
                     double time = GetTime();
 
-                    if (time - lastGenerationTime >= GENERATION_INTERVAL) {
+                    if (time - lastGenerationTime >= generation_interval) {
                         updateGrid();
                         generation++;
                         lastGenerationTime = time;

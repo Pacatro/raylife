@@ -8,7 +8,9 @@ A simple implementation of the [Conway's Game of Life](https://en.wikipedia.org/
 - Space: toggle play/draw mode
 - Left mouse button: toggle cell
 - Right mouse button: move camera
-- R: reset
+- Up: Increase generation interval
+- Down: Decrease generation interval
+- R: reset all
 
 ## 🖥️ Setup
 
