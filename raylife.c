@@ -1,30 +1,33 @@
-#include "raylib.h"
-#include "rlgl.h"
-#include "raymath.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#include "raylib.h"
+#include "rlgl.h"
+#include "raymath.h"
 
 #define SCREEN_HEIGHT 900
 #define SCREEN_WIDTH 1000
 #define INITIAL_CAMERA_ZOOM 1.0f
 #define ZOOM_SCALE 0.25f
 #define GRID_SPACING 50
-#define GRID_ROWS 50
-#define GRID_COLS 50
+#define GRID_ROWS 100
+#define GRID_COLS 100
+#define GENERATION_INTERVAL 0.5f
+#define MAX_GENERATIONS 100
 
-// TODO: FIX GENERATIONS
+// TODO: ADD COMAND LINE ARGUMENTS (max generations, etc)
 
 typedef struct {
     int isAlive;
     Vector2 pos;
     Vector2 size;
-    int aliveNeighbors;
 } Cell;
 
 Cell grid[GRID_ROWS][GRID_COLS];
 int aliveCells = 0;
+int generation = 0;
 
 void initGrid() {
     for (int i = 0; i < GRID_ROWS; i++) {
@@ -34,7 +37,6 @@ void initGrid() {
             grid[i][j].pos.y = i * GRID_SPACING;
             grid[i][j].size.x = GRID_SPACING;
             grid[i][j].size.y = GRID_SPACING;
-            grid[i][j].aliveNeighbors = 0;
         }
     }
 }
@@ -53,17 +55,6 @@ void drawGrid() {
     }
 }
 
-Cell *createCell(int x, int y, int height, int width) {
-    Cell *cell = malloc(sizeof(Cell));
-    cell->isAlive = 1;
-    cell->pos.x = x;
-    cell->pos.y = y;
-    cell->size.x = width;
-    cell->size.y = height;
-    cell->aliveNeighbors = 0;
-    return cell;
-}
-
 int countAliveNeighbors(int x, int y) {
     int count = 0;
 
@@ -74,14 +65,10 @@ int countAliveNeighbors(int x, int y) {
             if (dx == 0 && dy == 0) continue;
 
             // Calculate the neighbor's coordinates
-            int nx = x + dx;
-            int ny = y + dy;
+            int nx = (x + dx + GRID_COLS) % GRID_COLS;
+            int ny = (y + dy + GRID_ROWS) % GRID_ROWS;
 
-            if (nx >= 0 && nx < GRID_COLS && ny >= 0 && ny < GRID_ROWS) {
-                if (grid[ny][nx].isAlive) {
-                    count++;
-                }
-            }
+            count += grid[ny][nx].isAlive;
         }   
     }
 
@@ -91,34 +78,35 @@ int countAliveNeighbors(int x, int y) {
 void toggleCells(int x, int y) {
     if (x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS) {
         grid[y][x].isAlive = !grid[y][x].isAlive;
-        aliveCells = aliveCells + (grid[y][x].isAlive ? 1 : -1);
+        aliveCells += (grid[y][x].isAlive ? 1 : -1);
     }
 }
 
 void updateGrid() {
     Cell nextGrid[GRID_ROWS][GRID_COLS];
-    memcpy(nextGrid, grid, sizeof(nextGrid));
+    int newAliveCells = 0;
 
     for (int i = 0; i < GRID_ROWS; i++) {
         for (int j = 0; j < GRID_COLS; j++) {
-            int aliveNeighbors = countAliveNeighbors(i, j);
+            int aliveNeighbors = countAliveNeighbors(j, i);
             
-            // Game of life rules
-            if (grid[i][j].isAlive) {
-                if (aliveNeighbors < 2 || aliveNeighbors > 3) {
-                    nextGrid[i][j].isAlive = 0;
-                    aliveCells--;
-                }
+            // Copy position and size
+            nextGrid[i][j].pos = grid[i][j].pos;
+            nextGrid[i][j].size = grid[i][j].size;
+
+            // Game of Life rules
+            if ((grid[i][j].isAlive && (aliveNeighbors == 2 || aliveNeighbors == 3)) || 
+                (!grid[i][j].isAlive && aliveNeighbors == 3)) {
+                nextGrid[i][j].isAlive = 1;
+                newAliveCells++;
             } else {
-                if (aliveNeighbors == 3) {
-                    nextGrid[i][j].isAlive = 1;
-                    aliveCells++;
-                }
+                nextGrid[i][j].isAlive = 0;
             }
         }
     }
 
     memcpy(grid, nextGrid, sizeof(grid));
+    aliveCells = newAliveCells;
 }
 
 void drawCells() {
@@ -153,11 +141,20 @@ int main(void) {
 
     Camera2D camera = { 0 };
     camera.zoom = INITIAL_CAMERA_ZOOM;
+    
+    camera.offset.x = SCREEN_WIDTH / 2.0f;
+    camera.offset.y = SCREEN_HEIGHT / 2.0f;
+    
+    float gridCenterX = (GRID_COLS * GRID_SPACING) / 2.0f;
+    float gridCenterY = (GRID_ROWS * GRID_SPACING) / 2.0f;
+    
+    camera.target.x = gridCenterX;
+    camera.target.y = gridCenterY;
 
     int playMode = 0;
+    double lastGenerationTime = 0.0;
 
     initGrid();
-    printf("Alive cells: %d\n", aliveCells);
 
     SetTargetFPS(60);
 
@@ -177,16 +174,26 @@ int main(void) {
 
         BeginDrawing();
             ClearBackground(BLACK);
- 
+            DrawRectangle(5, 5, 200, 85, RAYWHITE); // Rectángulo semi-transparente
             const char *text = playMode ? "Play mode" : "Draw mode";
-            DrawText(text, 10, 10, 20, WHITE);
+            DrawText(text, 10, 10, 20, BLACK);
+            DrawText(TextFormat("Generation: %d", generation), 10, 35, 20, BLACK);
+            DrawText(TextFormat("Cells: %d", aliveCells), 10, 60, 20, BLACK);
+ 
  
             BeginMode2D(camera);
                 drawGrid();
-                // Draw cells
                 drawCells();
 
-                // Draw mode actions
+                // Reset all with R
+                if (IsKeyPressed(KEY_R)) {
+                    playMode = 0;
+                    generation = 0;
+                    aliveCells = 0;
+                    initGrid();
+                }
+
+                // Draw mode actions with left mouse button
                 if (!playMode && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                     Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
                     int gridX = (int)(mousePos.x / GRID_SPACING);
@@ -194,8 +201,18 @@ int main(void) {
                     toggleCells(gridX, gridY);
                 }
 
+                // Update grid with space
                 if (playMode && aliveCells > 0) {
-                    updateGrid();
+                    double time = GetTime();
+
+                    if (time - lastGenerationTime >= GENERATION_INTERVAL) {
+                        updateGrid();
+                        generation++;
+                        lastGenerationTime = time;
+
+                        if (generation >= MAX_GENERATIONS) 
+                            playMode = 0;
+                    }
                 }
 
             EndMode2D();
