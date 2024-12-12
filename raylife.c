@@ -12,8 +12,8 @@
 #define INITIAL_CAMERA_ZOOM 1.0f
 #define ZOOM_SCALE 0.25f
 #define GRID_SPACING 50
-#define GRID_ROWS 100
-#define GRID_COLS 100
+#define GRID_ROWS 200
+#define GRID_COLS 500
 #define INIT_INTERVAL 0.2f
 #define MAX_GENERATIONS 1000
 
