@@ -5,7 +5,7 @@ A simple implementation of the [Conway's Game of Life](https://en.wikipedia.org/
 ## 🎮 Controls
 
 - **Mouse wheel**: zoom in/out
-- **Space Key**: tToggle between play and draw modes. (If the number of generations exceeds the maximum, step to the next generation.)
+- **Space Key**: toggle between play and draw modes. (If the number of generations exceeds the maximum, step to the next generation.)
 - **Left mouse button**: toggle cell
 - **Right mouse button**: move camera
 - **Up Arrow**: Increase generation interval
