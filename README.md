@@ -39,7 +39,7 @@ You must have [raylib](https://www.raylib.com/) installed.
 
 Here’s a preview of the game:
 
-![RayLife GIF](gif_raylife.gif)
+![RayLife GIF](./screenshots/gif_raylife.gif)
 
 ## 🔑 License
 
