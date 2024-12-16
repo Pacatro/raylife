@@ -1,10 +1,10 @@
-# Usar la última imagen base de Ubuntu
+# Use the latest base image of Ubuntu
 FROM ubuntu:latest
 
-# Establecer el directorio de trabajo principal
+# Set the main working directory
 WORKDIR /usr/src
 
-# Instalar las dependencias necesarias
+# Install the necessary dependencies
 RUN apt update && apt upgrade -y && \
     apt install -y build-essential git cmake libasound2-dev libx11-dev libxrandr-dev \
                    libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev \
@@ -12,7 +12,7 @@ RUN apt update && apt upgrade -y && \
                    x11-apps && \
     apt autoremove -y && apt clean
 
-# Instalar raylib
+# Install raylib
 RUN git clone --depth 1 https://github.com/raysan5/raylib.git && \
     mkdir raylib/build && \
     cd raylib/build && \
@@ -21,17 +21,17 @@ RUN git clone --depth 1 https://github.com/raysan5/raylib.git && \
     ldconfig && \
     cd /usr/src && rm -rf raylib
 
-# Clonar el proyecto raylife
+# Clone the raylife project
 RUN git clone --depth 1 https://github.com/Pacatro/raylife.git
 
-# Establecer el directorio de trabajo del proyecto
+# Set the working directory for the project
 WORKDIR /usr/src/raylife/src
 
-# Construir el proyecto usando el makefile
+# Build the project using the makefile
 RUN make
 
-# Establecer el `LD_LIBRARY_PATH` para que incluya las bibliotecas de raylib
+# Set the `LD_LIBRARY_PATH` to include raylib libraries
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
-# Ejecutar el binario
+# Run the binary
 CMD ["./raylife"]
