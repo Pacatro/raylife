@@ -12,7 +12,7 @@ A simple implementation of the [Conway's Game of Life](https://en.wikipedia.org/
 - **Down Arrow**: Decrease generation interval
 - **R Key**: reset all
 
-## 🖥️ Build
+## 🖥️ Build locally
 
 You must have [raylib](https://www.raylib.com/) installed.
 
@@ -32,7 +32,24 @@ You must have [raylib](https://www.raylib.com/) installed.
 3. Run `./raylife`
 
     ```bash
-    ./raylife <generations> # default: 500  
+    ./raylife <generations> # default: 500
+    ```
+
+## 🐳 Docker
+
+You can use the [Dockerfile](./Dockerfile) to build a Docker image with the project.
+
+1. Build the image
+
+    ```bash
+    docker buildx build --tag raylife .
+    ```
+
+2. Run the image
+
+    ```bash
+    xhost +local:docker
+    docker run -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix raylife
     ```
 
 ## 🎥 Example
