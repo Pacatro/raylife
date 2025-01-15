@@ -20,7 +20,7 @@ You must have [raylib](https://www.raylib.com/) installed.
 
     ```bash
     git clone https://github.com/Pacatro/raylife.git
-    cd raylife/src
+    cd raylife/
     ```
 
 2. Run `make`

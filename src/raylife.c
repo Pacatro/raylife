@@ -1,15 +1,5 @@
 /*******************************************************************************************
  *
- *   RayLife - A Simple Implementation of Conway's Game of Life
- *
- *   Developed using raylib 5.5 (www.raylib.com)
- *
- *   MIT License - Created by Paco Algar (@P4k02)
- *
- ********************************************************************************************/
-
-/*******************************************************************************************
- *
  *   Controls:
  *   - Right Mouse Button: Drag to move the camera
  *   - Left Mouse Button: Toggle cell state in Draw mode
@@ -21,11 +11,11 @@
  *
  *******************************************************************************************/
 
-#include <string.h> // Required for: memcpy()
-#include <stdlib.h> // Required for: atoi()
+#include <string.h>
+#include <stdlib.h>
 
 #include "raylib.h"
-#include "raymath.h" // Required for: Vector2Add(), Vector2Scale()
+#include "raymath.h"
 
 //------------------------------------------------------------------------------------------
 // Constants Definition
@@ -40,9 +30,6 @@
 #define INIT_INTERVAL 0.2f
 #define MAX_GENERATIONS 500
 
-//------------------------------------------------------------------------------------------
-// Types and Structures Definition
-//------------------------------------------------------------------------------------------
 typedef struct
 {
     int isAlive;
@@ -61,13 +48,13 @@ static int playMode = 0;
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-static void InitGrid(void);
-static void DrawBoard(void);
-static void DrawCells(void);
-static void UpdateBoard(void);
-static int CountAliveNeighbors(int x, int y);
-static void ToggleCells(int x, int y);
-static void NextGeneration(double *lastGenerationTime, float *generationInterval);
+static void initGrid(void);
+static void drawBoard(void);
+static void drawCells(void);
+static void updateBoard(void);
+static int countAliveNeighbors(int x, int y);
+static void toggleCells(int x, int y);
+static void nextGeneration(double *lastGenerationTime, float *generationInterval);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -80,7 +67,7 @@ int main(int argc, char **argv)
         maxGenerations = MAX_GENERATIONS;
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "RayLife");
-    SetTargetFPS(60); // Set our game to run at 60 fps
+    SetTargetFPS(60);
 
     // Camera initialization
     Camera2D camera = {0};
@@ -91,9 +78,8 @@ int main(int argc, char **argv)
     double lastGenerationTime = 0.0;
     float generations_interval = INIT_INTERVAL;
 
-    InitGrid();
+    initGrid();
 
-    // Main game loop
     while (!WindowShouldClose())
     {
         if (aliveCells == 0)
@@ -134,7 +120,7 @@ int main(int argc, char **argv)
             generations = 0;
             aliveCells = 0;
             generations_interval = INIT_INTERVAL;
-            InitGrid();
+            initGrid();
         }
 
         // Increase generations interval with UP arrow
@@ -159,16 +145,16 @@ int main(int argc, char **argv)
             Vector2 mousePos = GetScreenToWorld2D(GetMousePosition(), camera);
             int boardX = (int)(mousePos.x / BOARD_SPACING);
             int boardY = (int)(mousePos.y / BOARD_SPACING);
-            ToggleCells(boardX, boardY);
+            toggleCells(boardX, boardY);
         }
 
         if (!playMode && IsKeyPressed(KEY_SPACE))
-            NextGeneration(&lastGenerationTime, &generations_interval);
+            nextGeneration(&lastGenerationTime, &generations_interval);
 
         // Start generations with space key
         if (playMode && aliveCells > 0)
         {
-            NextGeneration(&lastGenerationTime, &generations_interval);
+            nextGeneration(&lastGenerationTime, &generations_interval);
             if (generations >= maxGenerations)
                 playMode = 0;
         }
@@ -176,15 +162,15 @@ int main(int argc, char **argv)
         BeginDrawing();
         ClearBackground(BLACK);
 
-        DrawRectangle(5, 5, 300, 110, Fade(RAYWHITE, 0.8f));
+        DrawRectangle(5, 5, 300, 110, Fade(RAYWHITE, 0.9f));
         DrawText(playMode ? "Play mode" : "Draw mode", 10, 10, 20, BLACK);
         DrawText(TextFormat("Generation: %d (Max: %d)", generations, maxGenerations), 10, 35, 20, BLACK);
         DrawText(TextFormat("Cells: %d", aliveCells), 10, 60, 20, BLACK);
         DrawText(TextFormat("Generation interval: %.1fs", generations_interval), 10, 85, 20, BLACK);
 
         BeginMode2D(camera);
-        DrawBoard();
-        DrawCells();
+        drawBoard();
+        drawCells();
         EndMode2D();
         EndDrawing();
     }
@@ -197,7 +183,7 @@ int main(int argc, char **argv)
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-static void InitGrid(void)
+static void initGrid(void)
 {
     for (int i = 0; i < BOARD_ROWS; i++)
     {
@@ -212,7 +198,7 @@ static void InitGrid(void)
     }
 }
 
-static void DrawBoard(void)
+static void drawBoard(void)
 {
     for (int i = 0; i <= BOARD_ROWS; i++)
     {
@@ -229,7 +215,7 @@ static void DrawBoard(void)
     }
 }
 
-static int CountAliveNeighbors(int x, int y)
+static int countAliveNeighbors(int x, int y)
 {
     int count = 0;
 
@@ -253,7 +239,7 @@ static int CountAliveNeighbors(int x, int y)
     return count;
 }
 
-static void ToggleCells(int x, int y)
+static void toggleCells(int x, int y)
 {
     if (x >= 0 && x < BOARD_COLS && y >= 0 && y < BOARD_ROWS)
     {
@@ -262,7 +248,7 @@ static void ToggleCells(int x, int y)
     }
 }
 
-static void UpdateBoard(void)
+static void updateBoard(void)
 {
     Cell nextGrid[BOARD_ROWS][BOARD_COLS];
     int newAliveCells = 0;
@@ -271,7 +257,7 @@ static void UpdateBoard(void)
     {
         for (int j = 0; j < BOARD_COLS; j++)
         {
-            int aliveNeighbors = CountAliveNeighbors(j, i);
+            int aliveNeighbors = countAliveNeighbors(j, i);
             nextGrid[i][j] = board[i][j];
             nextGrid[i][j].isAlive = (board[i][j].isAlive && (aliveNeighbors == 2 || aliveNeighbors == 3)) ||
                                      (!board[i][j].isAlive && aliveNeighbors == 3);
@@ -284,7 +270,7 @@ static void UpdateBoard(void)
     aliveCells = newAliveCells;
 }
 
-static void DrawCells(void)
+static void drawCells(void)
 {
     for (int i = 0; i < BOARD_ROWS; i++)
     {
@@ -293,26 +279,20 @@ static void DrawCells(void)
             if (board[i][j].isAlive)
             {
                 DrawRectangleV(board[i][j].pos, board[i][j].size, WHITE);
-                DrawRectangleLinesEx(
-                    (Rectangle){
-                        board[i][j].pos.x,
-                        board[i][j].pos.y,
-                        board[i][j].size.x,
-                        board[i][j].size.y},
-                    1,
-                    BLACK);
+                Rectangle rec = {board[i][j].pos.x, board[i][j].pos.y, board[i][j].size.x, board[i][j].size.y};
+                DrawRectangleLinesEx(rec, 1, BLACK);
             }
         }
     }
 }
 
-static void NextGeneration(double *lastGenerationTime, float *generations_interval)
+static void nextGeneration(double *lastGenerationTime, float *generations_interval)
 {
     double time = GetTime();
 
     if (time - *lastGenerationTime >= *generations_interval)
     {
-        UpdateBoard();
+        updateBoard();
         generations++;
         *lastGenerationTime = time;
     }
