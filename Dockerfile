@@ -25,7 +25,7 @@ RUN git clone --depth 1 https://github.com/raysan5/raylib.git && \
 RUN git clone --depth 1 https://github.com/Pacatro/raylife.git
 
 # Set the working directory for the project
-WORKDIR /usr/src/raylife/src
+WORKDIR /usr/src/raylife/
 
 # Build the project using the makefile
 RUN make
