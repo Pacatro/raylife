@@ -42,7 +42,7 @@ You can use the [Dockerfile](./Dockerfile) to build a Docker image with the proj
 1. Build the image
 
     ```bash
-    docker buildx build --tag raylife .
+    docker build --tag raylife .
     ```
 
 2. Run the image
