@@ -17,9 +17,7 @@
 #include "raylib.h"
 #include "raymath.h"
 
-//------------------------------------------------------------------------------------------
-// Constants Definition
-//------------------------------------------------------------------------------------------
+#define GAME_TITLE "RayLife"
 #define SCREEN_HEIGHT 900
 #define SCREEN_WIDTH 1000
 #define INITIAL_CAMERA_ZOOM 1.0f
@@ -36,17 +34,11 @@ typedef struct {
   Vector2 size;
 } Cell;
 
-//----------------------------------------------------------------------------------
-// Global Variables Definition
-//----------------------------------------------------------------------------------
 static Cell board[BOARD_ROWS][BOARD_COLS];
 static int aliveCells = 0;
 static int generations = 0;
 static int playMode = 0;
 
-//----------------------------------------------------------------------------------
-// Module Functions Declaration
-//----------------------------------------------------------------------------------
 static void initGrid(void);
 static void drawBoard(void);
 static void drawCells(void);
@@ -56,16 +48,12 @@ static void toggleCells(int x, int y);
 static void nextGeneration(double *lastGenerationTime,
                            float *generationInterval);
 
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
 int main(int argc, char **argv) {
-  // Parse command line arguments
   int maxGenerations = argv[1] ? atoi(argv[1]) : MAX_GENERATIONS;
   if (maxGenerations < 1)
     maxGenerations = MAX_GENERATIONS;
 
-  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "RayLife");
+  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, GAME_TITLE);
   SetTargetFPS(60);
 
   // Camera initialization
@@ -154,19 +142,21 @@ int main(int argc, char **argv) {
     BeginDrawing();
     ClearBackground(BLACK);
 
-    DrawRectangle(5, 5, 300, 110, Fade(RAYWHITE, 0.9f));
-    DrawText(playMode ? "Play mode" : "Draw mode", 10, 10, 20, BLACK);
-    DrawText(
-        TextFormat("Generation: %d (Max: %d)", generations, maxGenerations), 10,
-        35, 20, BLACK);
-    DrawText(TextFormat("Cells: %d", aliveCells), 10, 60, 20, BLACK);
-    DrawText(TextFormat("Generation interval: %.1fs", generations_interval), 10,
-             85, 20, BLACK);
-
     BeginMode2D(camera);
     drawBoard();
     drawCells();
     EndMode2D();
+
+    DrawRectangle(5, 5, 300, 210, RAYWHITE);
+    DrawText(GAME_TITLE, 15, 15, 40, BLACK);
+    DrawText(playMode ? "Play mode" : "Draw mode", 15, 65, 20, BLACK);
+    DrawText(
+        TextFormat("Generation: %d (Max: %d)", generations, maxGenerations), 15,
+        95, 20, BLACK);
+    DrawText(TextFormat("Cells: %d", aliveCells), 15, 125, 20, BLACK);
+    DrawText(TextFormat("Generation interval: %.1fs", generations_interval), 15,
+             155, 20, BLACK);
+
     EndDrawing();
   }
 
@@ -175,9 +165,6 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-//----------------------------------------------------------------------------------
-// Module Functions Definition
-//----------------------------------------------------------------------------------
 static void initGrid(void) {
   for (int i = 0; i < BOARD_ROWS; i++) {
     for (int j = 0; j < BOARD_COLS; j++) {
